@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "system",
+        "target": "es5",
+        "outDir": "build",
+        "experimentalDecorators": true,
+        "noImplicitAny": true
+    },
+    "files": [
+        "./src/minesweeper.ts",
+        "./src/ko-es6.ts",
+        "./decl/knockout.d.ts",
+        "./decl/lodash.d.ts"
+    ]
+}

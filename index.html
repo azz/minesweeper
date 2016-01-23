@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Knockout Minesweeper</title>
+        <style type="text/css">
+            header {
+                font-size: 4em;
+                font-weight: bold;
+            }
+            main {
+
+            }
+            body {
+                background: lightgrey;
+                font-family: Arial, Helvetica, sans-serif;               
+                margin-left: 1em;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            .cell-row {
+                margin: 0 !important;
+                padding: 0 !important;
+                display: table-row;
+            }
+            .cell {
+                height: 40px;
+                max-height: 40px !important;
+                width: 40px;
+                max-width: 40px;
+                background: #BABABA;
+                text-align: center;
+                display: table-cell;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: 6px outset lightgrey;
+                font-size: 24px;       
+                text-overflow: hidden;      
+                cursor: pointer;   
+                vertical-align: middle;
+            }
+            .revealed {
+                border: 1px solid grey !important;
+                cursor: default;
+            }
+            .cell-adjacent-1 {
+                color: blue;
+            }
+            .cell-adjacent-2 {
+                color: green;
+            }
+            .cell-adjacent-3 {
+                color: red;
+            }
+            .cell-adjacent-4 {
+                color: darkblue;
+            }
+            .cell-adjacent-5 {
+                color: darkred;
+            }
+            .cell-adjacent-6 {
+                color: darkturquoise;
+            }
+            .cell-adjacent-7 {
+                color: black;
+            }
+            .cell-adjacent-9 {
+                color: #444;
+            }
+            .flagged {
+                color: red;
+                cursor: not-allowed !important;
+            }
+            .mine.flagged {
+                color: red;
+            }
+            a {
+                text-decoration: none;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <header data-bind="text: gameState">
+        </header>        
+        Flags left: <span data-bind="text: flagsRemaining"></span> <br/>
+        Mines: <span data-bind="text: difficulty.mines"></span> <br/>
+        <main data-bind="foreach: cellRows">
+          <div class="cell-row" data-bind="foreach: $data">
+            <div href="#" class="cell" 
+                data-bind="html: cellText(),
+                           css: cellCss(),    
+                           event: { contextmenu: flag },
+                           click: reveal"></div>
+          </div>
+        </main>
+        
+        <script src="node_modules/knockout/build/output/knockout-latest.debug.js"></script>
+        <script src="node_modules/lodash/lodash.js"></script>
+        <script src="build/minesweeper.js"></script>        
+    </body>
+</html>
