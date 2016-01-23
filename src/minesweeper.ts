@@ -5,16 +5,16 @@ declare var ko: KnockoutStatic;
 
 class MinesweeperCell {
     
-    isMine: KnockoutObservable<boolean>;
     isFlagged: KnockoutObservable<boolean>;
-    adjacent: number;
     isRevealed: KnockoutObservable<boolean>;
+    isMine: boolean;
+    adjacent: number;
     
     constructor(public x: number, public y: number, private parent: MinesweeperGrid) {
-        this.isMine = ko.observable(false);
         this.isFlagged = ko.observable(false);
-        this.adjacent = 0;
         this.isRevealed = ko.observable(false);
+        this.isMine = false;
+        this.adjacent = 0;
     }
     
     reveal() {
@@ -23,12 +23,13 @@ class MinesweeperCell {
         if (this.isFlagged()) return;
         
         this.isRevealed(true);
+        this.parent.incrementRevealed();
         
         if (this.adjacent > 0) {
             // propogate through and auto-reveal recursively. 
         }
         
-        if (this.isMine()) {
+        if (this.isMine) {
             this.parent.revealMines();
             alert("You lose!");
             window.location.reload();
@@ -50,7 +51,7 @@ class MinesweeperCell {
         if (this.isRevealed() && this.adjacent > 0)
             return this.adjacent;
         
-        if (this.isRevealed() && this.isMine())
+        if (this.isRevealed() && this.isMine)
             return '✺';
 
         if (this.isFlagged())
@@ -65,22 +66,13 @@ class MinesweeperCell {
             classes.push(`cell-adjacent-${this.adjacent}`);       
         if (this.isFlagged())
             classes.push`flagged`;
-        if (this.isMine())
+        if (this.isMine)
             classes.push`mine`;
         if (this.isRevealed())
             classes.push`revealed`;
             
         return classes.join` `;        
     })
-}
-
-function range(n: number): number[] {
-    let i = 0;
-    let a: number[] = Array(n);
-    for (let i = 0; i < n; ++i) {
-        a[i] = i;
-    }
-    return a;
 }
 
 interface MinesweeperDifficulty {
@@ -130,11 +122,13 @@ class MinesweeperGrid {
     isGameOver: KnockoutObservable<boolean>;
     wonGame: KnockoutObservable<boolean>;
     usedFlags: KnockoutObservable<number>;
+    totalRevealed: number;
     
     constructor(public difficulty: MinesweeperDifficulty) {        
         this.isGameOver = ko.observable(false);
         this.wonGame = ko.observable(false);
         this.usedFlags = ko.observable(0);
+        this.totalRevealed = 0;
         this.init();
     }
 
@@ -156,18 +150,18 @@ class MinesweeperGrid {
     assignMines() {
         const { mines } = this.difficulty;
         const mineCells = _.sampleSize(this.cells(), mines);
-        mineCells.forEach(cell => cell.isMine(true));
+        mineCells.forEach(cell => cell.isMine = true);
     }
     
     computeAdjacencies() {
         const grid = _.chunk(this.cells(), this.difficulty.width);
         grid.forEach((row, x) => {
             row.forEach((cell, y) => {
-                if (cell.isMine()) return;
+                if (cell.isMine) return;
                 
                 const adjacent = _.sumBy(MinesweeperGrid.offsets, offset => {
                     if (x + offset.x in grid && y + offset.y in grid[x]) {
-                        return grid[x + offset.x][y + offset.y].isMine() ? 1 : 0;
+                        return grid[x + offset.x][y + offset.y].isMine ? 1 : 0;
                     }
                     return 0;
                 });
@@ -183,7 +177,10 @@ class MinesweeperGrid {
                 if (cell.isRevealed()) {
                     won = false;
                 }
-                cell.isRevealed(true);
+                if (!cell.isRevealed())
+                    this.totalRevealed++;
+                    
+                cell.isRevealed(true);                
             }
         });
         this.isGameOver(true);
@@ -197,10 +194,22 @@ class MinesweeperGrid {
     removeFlag() {
         this.usedFlags(this.usedFlags() - 1);
     }
+    
+    incrementRevealed() {
+        this.totalRevealed++;
+        const { width, height, mines } = this.difficulty;
+        const numNonMines = (width * height) - mines;
+        if (this.totalRevealed === numNonMines) {
+            this.isGameOver(true);
+            this.wonGame(true);
+            
+            alert('Congratulations!');
+        }
+    }
 
     gameState = ko.pureComputed(() => {
         if (this.isGameOver()) {
-            if (this.wonGame()) return '😎�';
+            if (this.wonGame()) return '😎';
             else return '☹';
         }    
         return '☺';
