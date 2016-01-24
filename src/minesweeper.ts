@@ -17,7 +17,9 @@ class MinesweeperCell {
         this.adjacent = 0;
     }
     
-    reveal() {
+    reveal() { 
+        if (this.parent.isGameOver()) return;
+        
         if (this.isRevealed()) return;
         
         if (this.isFlagged()) return;
@@ -35,7 +37,21 @@ class MinesweeperCell {
         }
     }
     
-    flag() {
+    // when mouse is being held down
+    suspense() {
+        if (!this.isRevealed())
+            this.parent.mouseDown(true);
+    }
+
+    // when mouse is lifted
+    relief() {
+        if (!this.isRevealed())
+            this.parent.mouseDown(false);
+    }
+    
+    flag() {        
+        if (this.parent.isGameOver()) return;
+
         if (this.isFlagged()) {
             this.parent.removeFlag();
         } else {
@@ -54,7 +70,7 @@ class MinesweeperCell {
             return this.adjacent;
         
         if (this.isFlagged())
-            return '🚩';
+            return '⚐';
                         
         return '&nbsp;'
     })
@@ -125,14 +141,16 @@ class MinesweeperGame {
     }
     
     gameOver(won: boolean) {
-        const res = won ? 'Congratulations!\n' : 'Game over!\n';
-        const again = confirm(res + 'Would you like to play again?');
-        if (again) {
-            this.reset();
-        }
+        // const res = won ? 'Congratulations!\n' : 'Game over!\n';
+        // _.defer(() => {
+        //     const again = confirm(res + 'Would you like to play again?');
+        //     if (again) {
+        //         this.reset();
+        //     }
+        // });
     }
     
-    reset() {
+    reset = () => {
         this.grid(null);
         this.started(false);
     }
@@ -160,13 +178,15 @@ class MinesweeperGrid {
     cells: KnockoutObservableArray<MinesweeperCell>;
     isGameOver: KnockoutObservable<boolean>;
     usedFlags: KnockoutObservable<number>;
+    mouseDown: KnockoutObservable<boolean>;
     wonGame: boolean;
     totalRevealed: number;
-    
+
     constructor(public difficulty: MinesweeperDifficulty) {        
         this.isGameOver = ko.observable(false);
         this.wonGame = false;
         this.usedFlags = ko.observable(0);
+        this.mouseDown = ko.observable(false);
         this.totalRevealed = 0;
         this.init();
     }
@@ -228,6 +248,10 @@ class MinesweeperGrid {
             }
         });
         this.wonGame = won;
+        if (won) {
+            this.autoFlag();
+        }
+        
         this.isGameOver(true);
     }
     
@@ -237,6 +261,16 @@ class MinesweeperGrid {
     
     removeFlag() {
         this.usedFlags(this.usedFlags() - 1);
+    }
+    
+    autoFlag() {
+        this.cells().forEach(cell => {
+            if (cell.isFlagged()) return;
+            if (cell.isMine) {
+                cell.isFlagged(true);
+                this.useFlag();
+            }
+        });
     }
     
     incrementRevealed() {
@@ -266,6 +300,10 @@ class MinesweeperGrid {
                 if (!next.isRevealed()) {
                     this.incrementRevealed();        
                 }
+                if (next.isFlagged()) {
+                    this.removeFlag();
+                    next.isFlagged(false);
+                }
                 next.isRevealed(true);  
             }
         })
@@ -273,10 +311,13 @@ class MinesweeperGrid {
 
     gameState = ko.pureComputed(() => {
         if (this.isGameOver()) {
-            if (this.wonGame) return '😎';
-            else return '☹';
+            if (this.wonGame) return 'img/winner.png';
+            else return 'img/dead.png'; 
         }    
-        return '☺';
+        if (this.mouseDown())
+            return 'img/worried.png';
+                    
+        return 'img/happy.png'; 
     });
     
     cellRows = ko.pureComputed(() => {
@@ -289,7 +330,10 @@ class MinesweeperGrid {
 }
 
 const game = new MinesweeperGame;
-ko.applyBindings(game);
+window.onload = () => {
+    ko.applyBindings(game);
+};
+
 game.started.subscribe(started => {
     if (started) {
         console.log('Started a new game!', 'Difficulty:', game.selectedDifficulty().name);

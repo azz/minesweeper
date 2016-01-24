@@ -2,18 +2,34 @@
 <html>
     <head>
         <title>Knockout Minesweeper</title>
+        <meta charset="utf-8">
+        
         <style type="text/css">
+            section {
+                max-width: 1200px;
+                margin: 0 auto;
+                text-align: center;
+            }
             header {
                 font-size: 4em;
                 font-weight: bold;
+                color: yellow;
+                height: 80px;
+            }
+            header img {
+                cursor: pointer;
+                height: 64px;
             }
             body {
                 background: lightgrey;
                 font-family: Arial, Helvetica, sans-serif;               
-                margin-left: 1em;
+                margin-left: 1em;                
             }
             * {
                 box-sizing: border-box;
+            }
+            main {
+                display: inline-block;
             }
             .cell-row {
                 margin: 0 !important;
@@ -74,50 +90,54 @@
             a {
                 text-decoration: none;
             }
-            
+            ul {
+                list-style-position: inside;
+                margin-left: -30px !important;
+            }
         </style>
-    </head>
-    <body>
-        <h1>Minesweeper</h1>
-        <!-- ko ifnot: started -->
-        <select id=difficulty data-bind="options: difficulties,
-                                         optionsText: 'name',
-                                         value: selectedDifficulty,
-                                         optionsCaption: 'Choose a difficulty...'"></select>
-        <button id=start data-bind="click: start">Start</button>
-        <!-- /ko -->
-        <!-- ko if: started -->
-            <!-- ko with: grid -->
-                <header data-bind="text: gameState">
-                </header>
-                Flags left: <span data-bind="text: flagsRemaining"></span> <br/>
-                Mines: <span data-bind="text: difficulty.mines"></span> <br/>
-                <main data-bind="foreach: cellRows">
-                <div class="cell-row" data-bind="foreach: $data">
-                    <div href="#" class="cell" 
-                        data-bind="html: cellText(),
-                                css: cellCss(),    
-                                event: { contextmenu: flag },
-                                click: reveal"></div>
-                </div>
-                </main>
-            <!-- /ko -->
-            <br />
-            <footer>
-                <button data-bind="click: reset">Reset</button>
-                <br />
-                
-                How to play:
-                <ul>
-                    <li>Left click to sweep.</li>
-                    <li>Right click to add or remove a flag.</li>
-                    <li>Reload page to start again.</li>
-                </ul>
-            </footer>
-        <!-- /ko -->
         
         <script src="node_modules/knockout/build/output/knockout-latest.debug.js"></script>
         <script src="node_modules/lodash/lodash.js"></script>
-        <script src="build/minesweeper.js"></script>        
+        <script src="build/minesweeper.js"></script>
+    </head>
+    <body>
+        <section>
+            <h1>Minesweeper</h1>
+            <!-- ko ifnot: started -->
+            <h4 style="display: inline">Difficulty:</h4>
+            <select id=difficulty data-bind="options: difficulties,
+                                             optionsText: 'name',
+                                             value: selectedDifficulty"></select>
+            <button id=start data-bind="click: start">Start</button>
+            <!-- /ko -->
+            <!-- ko if: started -->
+                <!-- ko with: grid -->
+                    <header> 
+                        <img data-bind="attr: { src: gameState },
+                                        click: $parent.reset" />
+                    </header>
+                    Flags left: <span data-bind="text: flagsRemaining"></span> | 
+                    Mines: <span data-bind="text: difficulty.mines"></span> <br/>
+                    <main data-bind="foreach: cellRows">
+                    <div class="cell-row" data-bind="foreach: $data">
+                        <div href="#" class="cell" 
+                            data-bind="html: cellText(),
+                                      css: cellCss(),                                        
+                                      event: { contextmenu: flag, mousedown: suspense, mouseup: relief },
+                                      click: reveal"></div>
+                    </div>
+                    </main>
+                <!-- /ko -->
+                <br />
+                <footer>              
+                    <h4>How to play</h4>
+                    <ul>
+                        <li>Left click to sweep.</li>
+                        <li>Right click to add or remove a flag.</li>
+                        <li>Click the face to reset.</li>
+                    </ul>
+                </footer>
+            <!-- /ko -->
+        </section>        
     </body>
 </html>
