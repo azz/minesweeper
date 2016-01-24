@@ -17,9 +17,9 @@
                 color: yellow;
                 height: 80px;
             }
-            header img {
+            .status {
                 cursor: pointer;
-                height: 64px;
+                margin: 0 auto;
             }
             body {
                 background: lightgrey;
@@ -36,10 +36,11 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 display: table-row;
+                
             }
             .cell {
                 height: 40px;
-                max-height: 40px !important;
+                min-width: 30px;
                 width: 40px;
                 max-width: 40px;
                 background: #BABABA;
@@ -52,6 +53,12 @@
                 text-overflow: hidden;      
                 cursor: pointer;   
                 vertical-align: middle;
+            }
+            .cell.touch-screen {
+                max-height: 48px !important;                
+                height: 48px !important;
+                max-width: 48px !important;
+                width: 48px !important;
             }
             .revealed {
                 border: 1px solid grey !important;
@@ -78,7 +85,7 @@
             .cell-adjacent-7 {
                 color: black;
             }
-            .cell-adjacent-9 {
+            .cell-adjacent-8 {
                 color: #444;
             }
             .flagged {
@@ -96,6 +103,26 @@
                 list-style-position: inside;
                 margin-left: -30px !important;
             }
+            .status {
+                background-image: url(img/sprite-small.png);
+                background-repeat: no-repeat;
+                display: block;
+                width: 80px;
+                height: 80px;
+            }
+            .status-dead {
+                background-position: 0 0;
+            }
+            .status-happy {
+                background-position: 0 -80px;
+            }
+            .status-winner {
+                background-position: 0 -160px;
+            }
+            .status-worried {
+                background-position: 0 -240px;
+            }
+
         </style>
         
         <script src="node_modules/knockout/build/output/knockout-latest.debug.js"></script>
@@ -103,6 +130,8 @@
         <script src="build/minesweeper.js"></script>
     </head>
     <body>
+        <a href="https://github.com/derflatulator/minesweeper"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/8b6b8ccc6da3aa5722903da7b58eb5ab1081adee/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"></a>
+        
         <section>
             <h1>Minesweeper</h1>
             <!-- ko ifnot: started -->
@@ -115,8 +144,9 @@
             <!-- ko if: started -->
                 <!-- ko with: grid -->
                     <header> 
-                        <img data-bind="attr: { src: gameState },
-                                        click: $parent.reset" />
+                        <i class="status" 
+                           data-bind="css: gameState,
+                                      click: $parent.reset"></i>
                     </header>
                     Flags left: <span data-bind="text: flagsRemaining"></span> | 
                     Mines: <span data-bind="text: difficulty.mines"></span> <br/>
@@ -124,9 +154,10 @@
                     <div class="cell-row" data-bind="foreach: $data">
                         <div href="#" class="cell" 
                             data-bind="html: cellText(),
-                                      css: cellCss(),                                        
-                                      event: { contextmenu: flag, mousedown: suspense, mouseup: relief },
-                                      click: reveal"></div>
+                                       css: cellCss(),                                        
+                                       event: { contextmenu: flag, mousedown: suspense, mouseup: relief },                                       
+                                       click: reveal">
+                        </div>
                     </div>
                     </main>
                 <!-- /ko -->
