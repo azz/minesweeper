@@ -1,10 +1,19 @@
 <!doctype html>
 <html>
     <head>
-        <title>Knockout Minesweeper</title>
+        <title>Minesweeper</title>
         <meta charset="utf-8">
         <meta name="viewport" content="initial-scale=1, maximum-scale=1">
         
+        <!-- Chrome, Firefox OS and Opera -->
+        <meta name="theme-color" content="##ffdd00">
+        <!-- Windows Phone -->
+        <meta name="msapplication-navbutton-color" content="#ffdd00">
+        <!-- iOS Safari -->
+        <meta name="apple-mobile-web-app-status-bar-style" content="#ffdd00">
+
+        <link rel="icon" href="img/mine.ico" type="image/x-icon" />
+
         <style type="text/css">
             section {
                 /*max-width: 1200px;*/
@@ -24,7 +33,6 @@
             body {
                 background: lightgrey;
                 font-family: Arial, Helvetica, sans-serif;               
-                margin-left: 1em;                
             }
             * {
                 box-sizing: border-box;
@@ -167,12 +175,20 @@
                 <!-- /ko -->
                 <br />
                 <footer>              
-                    <h4>How to play</h4>
+                    <h4>How to play:</h4>
                     <ul>
+                        <!-- ko if: grid.touchScreen -->
+                        <li>Tap to sweep.</li>
+                        <li>Long-press to add or remove a flag.</li>                        
+                        <li>Tap the face to reset.</li>
+                        <li><a href="#" data-bind="click: hardReset">Tap here to change difficulty.</a></li>
+                        <!-- /ko -->
+                        <!-- ko ifnot: grid.touchScreen -->
                         <li>Left click to sweep.</li>
-                        <li>Right click to add or remove a flag.</li>
+                        <li>Right click to add or remove a flag.</li>                        
                         <li>Click the face to reset.</li>
                         <li>Click <a href="#" data-bind="click: hardReset">here</a> to change difficulty.</li>
+                        <!-- /ko -->
                     </ul>
                 </footer>
             <!-- /ko -->
