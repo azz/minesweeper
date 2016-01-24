@@ -4,16 +4,14 @@
   "description": "Simple minesweeper web app built to learn Knockout.js",
   "main": "build/minesweeper.js",
   "scripts": {
-    "build": "node_modules/.bin/tsc",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": "derlatulator/minesweeper",
   "author": "Lucas Azzola",
   "license": "MIT",
   "dependencies": {
     "knockout": "^3.4.0",
     "lodash": "^4.0.0"
-  },
-  "devDependencies": {
-    "tsc": "^1.20150623.0"
   }
 }

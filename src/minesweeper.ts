@@ -41,7 +41,7 @@ class MinesweeperCell {
     
     // when mouse is being held down
     suspense() {
-        if (!this.isRevealed())
+        if (!this.isRevealed() && !this.isFlagged())
             this.parent.mouseDown(true);
     }
 
@@ -64,7 +64,7 @@ class MinesweeperCell {
         }        
         
         if ('vibrate' in navigator) {
-            navigator.vibrate(200);
+            navigator.vibrate(this.isFlagged() ? [100, 100] : [200]);
         }
         
         this.isFlagged(!this.isFlagged());        
@@ -331,13 +331,15 @@ class MinesweeperGrid {
 
     gameState = ko.pureComputed(() => {
         if (this.isGameOver()) {
-            if (this.wonGame) return 'status-winner';
-            else return 'status-dead'; 
+            if (this.wonGame) 
+                return 'status-winner';
+            else 
+                return 'status-dead'; 
         }    
-        if (this.mouseDown())
+        if (this.mouseDown()) 
             return 'status-worried';
-                    
-        return 'status-happy'; 
+        else 
+            return 'status-happy'; 
     });
     
     cellRows = ko.pureComputed(() => {
