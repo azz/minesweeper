@@ -47,6 +47,9 @@ var MinesweeperCell = (function () {
         }
         if (this.isMine) {
             this.parent.revealMines();
+            if ('vibrate' in navigator) {
+                navigator.vibrate(1500);
+            }
         }
     };
     // when mouse is being held down
@@ -68,6 +71,9 @@ var MinesweeperCell = (function () {
         }
         else {
             this.parent.useFlag();
+        }
+        if ('vibrate' in navigator) {
+            navigator.vibrate(200);
         }
         this.isFlagged(!this.isFlagged());
         return false; // prevent event propogation
