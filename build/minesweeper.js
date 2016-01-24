@@ -25,8 +25,10 @@ var MinesweeperCell = (function () {
                 (_b = ["mine"], _b.raw = ["mine"], classes.push(_b));
             if (_this.isRevealed())
                 (_c = ["revealed"], _c.raw = ["revealed"], classes.push(_c));
-            return (_d = [" "], _d.raw = [" "], classes.join(_d));
-            var _a, _b, _c, _d;
+            if (_this.parent.touchScreen)
+                (_d = ["touch-screen"], _d.raw = ["touch-screen"], classes.push(_d));
+            return (_e = [" "], _e.raw = [" "], classes.join(_e));
+            var _a, _b, _c, _d, _e;
         });
         this.isFlagged = ko.observable(false);
         this.isRevealed = ko.observable(false);
@@ -34,12 +36,9 @@ var MinesweeperCell = (function () {
         this.isMine = false;
     }
     MinesweeperCell.prototype.reveal = function () {
-        if (this.parent.isGameOver())
+        if (this.parent.isGameOver() || this.isRevealed() || this.isFlagged())
             return;
-        if (this.isRevealed())
-            return;
-        if (this.isFlagged())
-            return;
+        this.parent.mouseDown(false);
         this.isRevealed(true);
         this.parent.incrementRevealed();
         if (!this.isMine && this.adjacent() === 0) {
@@ -63,6 +62,7 @@ var MinesweeperCell = (function () {
     MinesweeperCell.prototype.flag = function () {
         if (this.parent.isGameOver() || this.isRevealed())
             return;
+        this.parent.mouseDown(false);
         if (this.isFlagged()) {
             this.parent.removeFlag();
         }
@@ -136,13 +136,13 @@ var MinesweeperGrid = (function () {
         this.gameState = ko.pureComputed(function () {
             if (_this.isGameOver()) {
                 if (_this.wonGame)
-                    return 'img/winner.png';
+                    return 'status-winner';
                 else
-                    return 'img/dead.png';
+                    return 'status-dead';
             }
             if (_this.mouseDown())
-                return 'img/worried.png';
-            return 'img/happy.png';
+                return 'status-worried';
+            return 'status-happy';
         });
         this.cellRows = ko.pureComputed(function () {
             return _.chunk(_this.cells(), _this.difficulty.width);
@@ -157,6 +157,7 @@ var MinesweeperGrid = (function () {
         this.totalRevealed = 0;
         this.createCells();
         this.initialized = false;
+        this.touchScreen = 'ontouchstart' in window;
         // this.init(); // do this after first reveal
     }
     MinesweeperGrid.prototype.init = function () {
