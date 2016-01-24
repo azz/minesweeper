@@ -8,13 +8,13 @@ class MinesweeperCell {
     isFlagged: KnockoutObservable<boolean>;
     isRevealed: KnockoutObservable<boolean>;
     isMine: boolean;
-    adjacent: number;
+    adjacent: KnockoutObservable<number>;
     
     constructor(public x: number, public y: number, private parent: MinesweeperGrid) {
         this.isFlagged = ko.observable(false);
         this.isRevealed = ko.observable(false);
+        this.adjacent = ko.observable(0);
         this.isMine = false;
-        this.adjacent = 0;
     }
     
     reveal() { 
@@ -27,7 +27,7 @@ class MinesweeperCell {
         this.isRevealed(true);
         this.parent.incrementRevealed();
         
-        if (!this.isMine && this.adjacent === 0) {
+        if (!this.isMine && this.adjacent() === 0) {
             // propogate through and auto-reveal recursively. 
             this.parent.revealAdjacentCells(this);
         }
@@ -50,7 +50,8 @@ class MinesweeperCell {
     }
     
     flag() {        
-        if (this.parent.isGameOver()) return;
+        if (this.parent.isGameOver() || this.isRevealed())
+            return;
 
         if (this.isFlagged()) {
             this.parent.removeFlag();
@@ -66,8 +67,8 @@ class MinesweeperCell {
         if (this.isRevealed() && this.isMine)
             return '✺';
 
-        if (this.isRevealed() && this.adjacent > 0)
-            return this.adjacent;
+        if (this.isRevealed() && this.adjacent() > 0)
+            return this.adjacent();
         
         if (this.isFlagged())
             return '⚐';
@@ -77,8 +78,8 @@ class MinesweeperCell {
     
     cellCss = ko.pureComputed(() => {
         let classes: string[] = [];
-        if (!this.isMine && this.adjacent > 0)
-            classes.push(`cell-adjacent-${this.adjacent}`);       
+        if (!this.isMine && this.adjacent() > 0)
+            classes.push(`cell-adjacent-${this.adjacent()}`);       
         if (this.isFlagged())
             classes.push`flagged`;
         if (this.isMine)
@@ -141,16 +142,16 @@ class MinesweeperGame {
     }
     
     gameOver(won: boolean) {
-        // const res = won ? 'Congratulations!\n' : 'Game over!\n';
-        // _.defer(() => {
-        //     const again = confirm(res + 'Would you like to play again?');
-        //     if (again) {
-        //         this.reset();
-        //     }
-        // });
+        const res = won ? 'Congratulations!\n' : 'Game over!\n';
+        console.info(res);
     }
     
     reset = () => {
+        this.grid(null);
+        this.start();
+    }
+    
+    hardReset = () => {
         this.grid(null);
         this.started(false);
     }
@@ -181,6 +182,7 @@ class MinesweeperGrid {
     mouseDown: KnockoutObservable<boolean>;
     wonGame: boolean;
     totalRevealed: number;
+    initialized: boolean;
 
     constructor(public difficulty: MinesweeperDifficulty) {        
         this.isGameOver = ko.observable(false);
@@ -188,13 +190,15 @@ class MinesweeperGrid {
         this.usedFlags = ko.observable(0);
         this.mouseDown = ko.observable(false);
         this.totalRevealed = 0;
-        this.init();
+        this.createCells();
+        this.initialized = false;
+        // this.init(); // do this after first reveal
     }
 
     init() {
-        this.createCells();
         this.assignMines();
         this.computeAdjacencies();
+        this.initialized = true;
     }
     
     createCells() {
@@ -204,12 +208,12 @@ class MinesweeperGrid {
                 new MinesweeperCell(x, y, this)
             ))
         ));
-        console.log(this.cellRows());
     }
     
     assignMines() {
         const { mines } = this.difficulty;
-        const mineCells = _.sampleSize(this.cells(), mines);
+        const cells = this.cells().filter(cell => !cell.isRevealed());
+        const mineCells = _.sampleSize(cells, mines);
         mineCells.forEach(cell => cell.isMine = true);
     }
     
@@ -225,7 +229,7 @@ class MinesweeperGrid {
                     }
                     return 0;
                 });
-                cell.adjacent = adjacent;
+                cell.adjacent(adjacent);
             })
         })
     }
@@ -281,6 +285,9 @@ class MinesweeperGrid {
             this.wonGame = true;
             this.isGameOver(true);
         }
+        
+        if (!this.initialized)
+            this.init();
     }
     
     revealAdjacentCells(current: MinesweeperCell, done: MinesweeperCell[] = []) {
@@ -294,7 +301,7 @@ class MinesweeperGrid {
                 if (done.indexOf(next) > -1) 
                     return;
                 
-                if (next.adjacent === 0) {      
+                if (next.adjacent() === 0) {      
                     this.revealAdjacentCells(next, done);
                 }
                 if (!next.isRevealed()) {
