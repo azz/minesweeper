@@ -179,25 +179,25 @@
                         </div>
                     </div>
                     </main>
+                    <br />
+                    <footer>              
+                        <h4>How to play:</h4>
+                        <ul>
+                            <!-- ko if: touchScreen -->
+                            <li>Tap to sweep.</li>
+                            <li>Long-press to add or remove a flag.</li>                        
+                            <li>Tap the face to reset.</li>
+                            <li><a href="#" data-bind="click: $parent.hardReset">Tap here to change difficulty.</a></li>
+                            <!-- /ko -->
+                            <!-- ko ifnot: touchScreen -->
+                            <li>Left click to sweep.</li>
+                            <li>Right click to add or remove a flag.</li>                        
+                            <li>Click the face to reset.</li>
+                            <li>Click <a href="#" data-bind="click: $parent.hardReset">here</a> to change difficulty.</li>
+                            <!-- /ko -->
+                        </ul>
+                    </footer>
                 <!-- /ko -->
-                <br />
-                <footer>              
-                    <h4>How to play:</h4>
-                    <ul>
-                        <!-- ko if: grid.touchScreen -->
-                        <li>Tap to sweep.</li>
-                        <li>Long-press to add or remove a flag.</li>                        
-                        <li>Tap the face to reset.</li>
-                        <li><a href="#" data-bind="click: hardReset">Tap here to change difficulty.</a></li>
-                        <!-- /ko -->
-                        <!-- ko ifnot: grid.touchScreen -->
-                        <li>Left click to sweep.</li>
-                        <li>Right click to add or remove a flag.</li>                        
-                        <li>Click the face to reset.</li>
-                        <li>Click <a href="#" data-bind="click: hardReset">here</a> to change difficulty.</li>
-                        <!-- /ko -->
-                    </ul>
-                </footer>
             <!-- /ko -->
         </section>        
     </body>
