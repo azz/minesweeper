@@ -12,7 +12,7 @@ var MinesweeperCell = (function () {
             if (_this.isRevealed() && _this.adjacent > 0)
                 return _this.adjacent;
             if (_this.isFlagged())
-                return '🚩';
+                return '⚐';
             return '&nbsp;';
         });
         this.cellCss = ko.pureComputed(function () {
@@ -34,6 +34,8 @@ var MinesweeperCell = (function () {
         this.adjacent = 0;
     }
     MinesweeperCell.prototype.reveal = function () {
+        if (this.parent.isGameOver())
+            return;
         if (this.isRevealed())
             return;
         if (this.isFlagged())
@@ -48,7 +50,19 @@ var MinesweeperCell = (function () {
             this.parent.revealMines();
         }
     };
+    // when mouse is being held down
+    MinesweeperCell.prototype.suspense = function () {
+        if (!this.isRevealed())
+            this.parent.mouseDown(true);
+    };
+    // when mouse is lifted
+    MinesweeperCell.prototype.relief = function () {
+        if (!this.isRevealed())
+            this.parent.mouseDown(false);
+    };
     MinesweeperCell.prototype.flag = function () {
+        if (this.parent.isGameOver())
+            return;
         if (this.isFlagged()) {
             this.parent.removeFlag();
         }
@@ -62,6 +76,11 @@ var MinesweeperCell = (function () {
 })();
 var MinesweeperGame = (function () {
     function MinesweeperGame() {
+        var _this = this;
+        this.reset = function () {
+            _this.grid(null);
+            _this.started(false);
+        };
         this.difficulties = ko.observableArray([
             {
                 name: 'Beginner',
@@ -98,15 +117,13 @@ var MinesweeperGame = (function () {
         });
     };
     MinesweeperGame.prototype.gameOver = function (won) {
-        var res = won ? 'Congratulations!\n' : 'Game over!\n';
-        var again = confirm(res + 'Would you like to play again?');
-        if (again) {
-            this.reset();
-        }
-    };
-    MinesweeperGame.prototype.reset = function () {
-        this.grid(null);
-        this.started(false);
+        // const res = won ? 'Congratulations!\n' : 'Game over!\n';
+        // _.defer(() => {
+        //     const again = confirm(res + 'Would you like to play again?');
+        //     if (again) {
+        //         this.reset();
+        //     }
+        // });
     };
     return MinesweeperGame;
 })();
@@ -120,11 +137,13 @@ var MinesweeperGrid = (function () {
         this.gameState = ko.pureComputed(function () {
             if (_this.isGameOver()) {
                 if (_this.wonGame)
-                    return '😎';
+                    return 'img/winner.png';
                 else
-                    return '☹';
+                    return 'img/dead.png';
             }
-            return '☺';
+            if (_this.mouseDown())
+                return 'img/worried.png';
+            return 'img/happy.png';
         });
         this.cellRows = ko.pureComputed(function () {
             return _.chunk(_this.cells(), _this.difficulty.width);
@@ -135,6 +154,7 @@ var MinesweeperGrid = (function () {
         this.isGameOver = ko.observable(false);
         this.wonGame = false;
         this.usedFlags = ko.observable(0);
+        this.mouseDown = ko.observable(false);
         this.totalRevealed = 0;
         this.init();
     }
@@ -190,6 +210,9 @@ var MinesweeperGrid = (function () {
             }
         });
         this.wonGame = won;
+        if (won) {
+            this.autoFlag();
+        }
         this.isGameOver(true);
     };
     MinesweeperGrid.prototype.useFlag = function () {
@@ -197,6 +220,17 @@ var MinesweeperGrid = (function () {
     };
     MinesweeperGrid.prototype.removeFlag = function () {
         this.usedFlags(this.usedFlags() - 1);
+    };
+    MinesweeperGrid.prototype.autoFlag = function () {
+        var _this = this;
+        this.cells().forEach(function (cell) {
+            if (cell.isFlagged())
+                return;
+            if (cell.isMine) {
+                cell.isFlagged(true);
+                _this.useFlag();
+            }
+        });
     };
     MinesweeperGrid.prototype.incrementRevealed = function () {
         this.totalRevealed++;
@@ -225,6 +259,10 @@ var MinesweeperGrid = (function () {
                 if (!next.isRevealed()) {
                     _this.incrementRevealed();
                 }
+                if (next.isFlagged()) {
+                    _this.removeFlag();
+                    next.isFlagged(false);
+                }
                 next.isRevealed(true);
             }
         });
@@ -242,7 +280,9 @@ var MinesweeperGrid = (function () {
     return MinesweeperGrid;
 })();
 var game = new MinesweeperGame;
-ko.applyBindings(game);
+window.onload = function () {
+    ko.applyBindings(game);
+};
 game.started.subscribe(function (started) {
     if (started) {
         console.log('Started a new game!', 'Difficulty:', game.selectedDifficulty().name);
