@@ -18,12 +18,11 @@ class MinesweeperCell {
     }
     
     reveal() { 
-        if (this.parent.isGameOver()) return;
+        if (this.parent.isGameOver() || this.isRevealed() || this.isFlagged()) 
+            return;
         
-        if (this.isRevealed()) return;
-        
-        if (this.isFlagged()) return;
-        
+        this.parent.mouseDown(false);
+
         this.isRevealed(true);
         this.parent.incrementRevealed();
         
@@ -52,6 +51,8 @@ class MinesweeperCell {
     flag() {        
         if (this.parent.isGameOver() || this.isRevealed())
             return;
+
+        this.parent.mouseDown(false);
 
         if (this.isFlagged()) {
             this.parent.removeFlag();
@@ -86,7 +87,9 @@ class MinesweeperCell {
             classes.push`mine`;
         if (this.isRevealed())
             classes.push`revealed`;
-            
+        if (this.parent.touchScreen)
+            classes.push`touch-screen`;    
+                    
         return classes.join` `;        
     })
 }
@@ -103,6 +106,7 @@ class MinesweeperGame {
     started: KnockoutObservable<boolean>;
     selectedDifficulty: KnockoutObservable<MinesweeperDifficulty>;
     grid: KnockoutObservable<MinesweeperGrid>;
+    
     
     constructor() {
         this.difficulties = ko.observableArray([    
@@ -183,6 +187,7 @@ class MinesweeperGrid {
     wonGame: boolean;
     totalRevealed: number;
     initialized: boolean;
+    touchScreen: boolean;
 
     constructor(public difficulty: MinesweeperDifficulty) {        
         this.isGameOver = ko.observable(false);
@@ -192,6 +197,7 @@ class MinesweeperGrid {
         this.totalRevealed = 0;
         this.createCells();
         this.initialized = false;
+        this.touchScreen = 'ontouchstart' in window;
         // this.init(); // do this after first reveal
     }
 
@@ -318,13 +324,13 @@ class MinesweeperGrid {
 
     gameState = ko.pureComputed(() => {
         if (this.isGameOver()) {
-            if (this.wonGame) return 'img/winner.png';
-            else return 'img/dead.png'; 
+            if (this.wonGame) return 'status-winner';
+            else return 'status-dead'; 
         }    
         if (this.mouseDown())
-            return 'img/worried.png';
+            return 'status-worried';
                     
-        return 'img/happy.png'; 
+        return 'status-happy'; 
     });
     
     cellRows = ko.pureComputed(() => {
