@@ -54,7 +54,7 @@ var MinesweeperCell = (function () {
     };
     // when mouse is being held down
     MinesweeperCell.prototype.suspense = function () {
-        if (!this.isRevealed())
+        if (!this.isRevealed() && !this.isFlagged())
             this.parent.mouseDown(true);
     };
     // when mouse is lifted
@@ -73,7 +73,7 @@ var MinesweeperCell = (function () {
             this.parent.useFlag();
         }
         if ('vibrate' in navigator) {
-            navigator.vibrate(200);
+            navigator.vibrate(this.isFlagged() ? [100, 100] : [200]);
         }
         this.isFlagged(!this.isFlagged());
         return false; // prevent event propogation
@@ -148,7 +148,8 @@ var MinesweeperGrid = (function () {
             }
             if (_this.mouseDown())
                 return 'status-worried';
-            return 'status-happy';
+            else
+                return 'status-happy';
         });
         this.cellRows = ko.pureComputed(function () {
             return _.chunk(_this.cells(), _this.difficulty.width);
