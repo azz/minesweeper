@@ -9,16 +9,16 @@ var MinesweeperCell = (function () {
         this.cellText = ko.pureComputed(function () {
             if (_this.isRevealed() && _this.isMine)
                 return '✺';
-            if (_this.isRevealed() && _this.adjacent > 0)
-                return _this.adjacent;
+            if (_this.isRevealed() && _this.adjacent() > 0)
+                return _this.adjacent();
             if (_this.isFlagged())
                 return '⚐';
             return '&nbsp;';
         });
         this.cellCss = ko.pureComputed(function () {
             var classes = [];
-            if (!_this.isMine && _this.adjacent > 0)
-                classes.push("cell-adjacent-" + _this.adjacent);
+            if (!_this.isMine && _this.adjacent() > 0)
+                classes.push("cell-adjacent-" + _this.adjacent());
             if (_this.isFlagged())
                 (_a = ["flagged"], _a.raw = ["flagged"], classes.push(_a));
             if (_this.isMine)
@@ -30,8 +30,8 @@ var MinesweeperCell = (function () {
         });
         this.isFlagged = ko.observable(false);
         this.isRevealed = ko.observable(false);
+        this.adjacent = ko.observable(0);
         this.isMine = false;
-        this.adjacent = 0;
     }
     MinesweeperCell.prototype.reveal = function () {
         if (this.parent.isGameOver())
@@ -42,7 +42,7 @@ var MinesweeperCell = (function () {
             return;
         this.isRevealed(true);
         this.parent.incrementRevealed();
-        if (!this.isMine && this.adjacent === 0) {
+        if (!this.isMine && this.adjacent() === 0) {
             // propogate through and auto-reveal recursively. 
             this.parent.revealAdjacentCells(this);
         }
@@ -61,7 +61,7 @@ var MinesweeperCell = (function () {
             this.parent.mouseDown(false);
     };
     MinesweeperCell.prototype.flag = function () {
-        if (this.parent.isGameOver())
+        if (this.parent.isGameOver() || this.isRevealed())
             return;
         if (this.isFlagged()) {
             this.parent.removeFlag();
@@ -78,6 +78,10 @@ var MinesweeperGame = (function () {
     function MinesweeperGame() {
         var _this = this;
         this.reset = function () {
+            _this.grid(null);
+            _this.start();
+        };
+        this.hardReset = function () {
             _this.grid(null);
             _this.started(false);
         };
@@ -117,13 +121,8 @@ var MinesweeperGame = (function () {
         });
     };
     MinesweeperGame.prototype.gameOver = function (won) {
-        // const res = won ? 'Congratulations!\n' : 'Game over!\n';
-        // _.defer(() => {
-        //     const again = confirm(res + 'Would you like to play again?');
-        //     if (again) {
-        //         this.reset();
-        //     }
-        // });
+        var res = won ? 'Congratulations!\n' : 'Game over!\n';
+        console.info(res);
     };
     return MinesweeperGame;
 })();
@@ -156,12 +155,14 @@ var MinesweeperGrid = (function () {
         this.usedFlags = ko.observable(0);
         this.mouseDown = ko.observable(false);
         this.totalRevealed = 0;
-        this.init();
+        this.createCells();
+        this.initialized = false;
+        // this.init(); // do this after first reveal
     }
     MinesweeperGrid.prototype.init = function () {
-        this.createCells();
         this.assignMines();
         this.computeAdjacencies();
+        this.initialized = true;
     };
     MinesweeperGrid.prototype.createCells = function () {
         var _this = this;
@@ -169,11 +170,11 @@ var MinesweeperGrid = (function () {
         this.cells = ko.observableArray(_.flatten(_.range(height).map(function (y) { return _.range(width).map(function (x) {
             return new MinesweeperCell(x, y, _this);
         }); })));
-        console.log(this.cellRows());
     };
     MinesweeperGrid.prototype.assignMines = function () {
         var mines = this.difficulty.mines;
-        var mineCells = _.sampleSize(this.cells(), mines);
+        var cells = this.cells().filter(function (cell) { return !cell.isRevealed(); });
+        var mineCells = _.sampleSize(cells, mines);
         mineCells.forEach(function (cell) { return cell.isMine = true; });
     };
     MinesweeperGrid.prototype.computeAdjacencies = function () {
@@ -189,7 +190,7 @@ var MinesweeperGrid = (function () {
                     }
                     return 0;
                 });
-                cell.adjacent = adjacent;
+                cell.adjacent(adjacent);
             });
         });
     };
@@ -240,6 +241,8 @@ var MinesweeperGrid = (function () {
             this.wonGame = true;
             this.isGameOver(true);
         }
+        if (!this.initialized)
+            this.init();
     };
     MinesweeperGrid.prototype.revealAdjacentCells = function (current, done) {
         var _this = this;
@@ -253,7 +256,7 @@ var MinesweeperGrid = (function () {
                 var next = grid[nY][nX];
                 if (done.indexOf(next) > -1)
                     return;
-                if (next.adjacent === 0) {
+                if (next.adjacent() === 0) {
                     _this.revealAdjacentCells(next, done);
                 }
                 if (!next.isRevealed()) {
