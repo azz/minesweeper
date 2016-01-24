@@ -33,6 +33,9 @@ class MinesweeperCell {
         
         if (this.isMine) {
             this.parent.revealMines();
+            if ('vibrate' in navigator) {
+                navigator.vibrate(1500);
+            }
         }
     }
     
@@ -58,8 +61,12 @@ class MinesweeperCell {
             this.parent.removeFlag();
         } else {
             this.parent.useFlag();
+        }        
+        
+        if ('vibrate' in navigator) {
+            navigator.vibrate(200);
         }
-         
+        
         this.isFlagged(!this.isFlagged());        
         return false; // prevent event propogation
     }
