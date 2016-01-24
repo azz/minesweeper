@@ -7,17 +7,17 @@ var MinesweeperCell = (function () {
         this.y = y;
         this.parent = parent;
         this.cellText = ko.pureComputed(function () {
-            if (_this.isRevealed() && _this.adjacent > 0)
-                return _this.adjacent;
             if (_this.isRevealed() && _this.isMine)
                 return '✺';
+            if (_this.isRevealed() && _this.adjacent > 0)
+                return _this.adjacent;
             if (_this.isFlagged())
                 return '🚩';
             return '&nbsp;';
         });
         this.cellCss = ko.pureComputed(function () {
             var classes = [];
-            if (_this.adjacent > 0)
+            if (!_this.isMine && _this.adjacent > 0)
                 classes.push("cell-adjacent-" + _this.adjacent);
             if (_this.isFlagged())
                 (_a = ["flagged"], _a.raw = ["flagged"], classes.push(_a));
@@ -40,12 +40,12 @@ var MinesweeperCell = (function () {
             return;
         this.isRevealed(true);
         this.parent.incrementRevealed();
-        if (this.adjacent > 0) {
+        if (!this.isMine && this.adjacent === 0) {
+            // propogate through and auto-reveal recursively. 
+            this.parent.revealAdjacentCells(this);
         }
         if (this.isMine) {
             this.parent.revealMines();
-            alert("You lose!");
-            window.location.reload();
         }
     };
     MinesweeperCell.prototype.flag = function () {
@@ -60,23 +60,56 @@ var MinesweeperCell = (function () {
     };
     return MinesweeperCell;
 })();
-var MinesweeperDifficulties = {
-    beginner: {
-        width: 8,
-        height: 8,
-        mines: 10
-    },
-    intermediate: {
-        width: 16,
-        height: 16,
-        mines: 40
-    },
-    expert: {
-        width: 30,
-        height: 16,
-        mines: 99
+var MinesweeperGame = (function () {
+    function MinesweeperGame() {
+        this.difficulties = ko.observableArray([
+            {
+                name: 'Beginner',
+                width: 8,
+                height: 8,
+                mines: 10
+            },
+            {
+                name: 'Intermediate',
+                width: 16,
+                height: 16,
+                mines: 40
+            },
+            {
+                name: 'Expert',
+                width: 30,
+                height: 16,
+                mines: 99
+            }
+        ]);
+        this.started = ko.observable(false);
+        this.selectedDifficulty = ko.observable(null);
+        this.grid = ko.observable(null);
     }
-};
+    MinesweeperGame.prototype.start = function () {
+        var _this = this;
+        if (!this.selectedDifficulty())
+            return;
+        this.started(true);
+        this.grid(new MinesweeperGrid(this.selectedDifficulty()));
+        this.grid().isGameOver.subscribe(function (gameOver) {
+            if (gameOver)
+                _this.gameOver(_this.grid().wonGame);
+        });
+    };
+    MinesweeperGame.prototype.gameOver = function (won) {
+        var res = won ? 'Congratulations!\n' : 'Game over!\n';
+        var again = confirm(res + 'Would you like to play again?');
+        if (again) {
+            this.reset();
+        }
+    };
+    MinesweeperGame.prototype.reset = function () {
+        this.grid(null);
+        this.started(false);
+    };
+    return MinesweeperGame;
+})();
 function computed(target) {
     return ko.computed(target);
 }
@@ -86,7 +119,7 @@ var MinesweeperGrid = (function () {
         this.difficulty = difficulty;
         this.gameState = ko.pureComputed(function () {
             if (_this.isGameOver()) {
-                if (_this.wonGame())
+                if (_this.wonGame)
                     return '😎';
                 else
                     return '☹';
@@ -100,7 +133,7 @@ var MinesweeperGrid = (function () {
             return _this.difficulty.mines - _this.usedFlags();
         });
         this.isGameOver = ko.observable(false);
-        this.wonGame = ko.observable(false);
+        this.wonGame = false;
         this.usedFlags = ko.observable(0);
         this.totalRevealed = 0;
         this.init();
@@ -113,9 +146,10 @@ var MinesweeperGrid = (function () {
     MinesweeperGrid.prototype.createCells = function () {
         var _this = this;
         var _a = this.difficulty, width = _a.width, height = _a.height;
-        this.cells = ko.observableArray(_.flatten(_.range(width).map(function (x) { return _.range(height).map(function (y) {
+        this.cells = ko.observableArray(_.flatten(_.range(height).map(function (y) { return _.range(width).map(function (x) {
             return new MinesweeperCell(x, y, _this);
         }); })));
+        console.log(this.cellRows());
     };
     MinesweeperGrid.prototype.assignMines = function () {
         var mines = this.difficulty.mines;
@@ -123,20 +157,24 @@ var MinesweeperGrid = (function () {
         mineCells.forEach(function (cell) { return cell.isMine = true; });
     };
     MinesweeperGrid.prototype.computeAdjacencies = function () {
-        var grid = _.chunk(this.cells(), this.difficulty.width);
-        grid.forEach(function (row, x) {
-            row.forEach(function (cell, y) {
-                if (cell.isMine)
-                    return;
+        var _this = this;
+        var grid = this.cellRows();
+        grid.forEach(function (row, y) {
+            row.forEach(function (cell, x) {
                 var adjacent = _.sumBy(MinesweeperGrid.offsets, function (offset) {
-                    if (x + offset.x in grid && y + offset.y in grid[x]) {
-                        return grid[x + offset.x][y + offset.y].isMine ? 1 : 0;
+                    var cX = x + offset.x;
+                    var cY = y + offset.y;
+                    if (_this.inRange(grid, cX, cY)) {
+                        return grid[cY][cX].isMine ? 1 : 0;
                     }
                     return 0;
                 });
                 cell.adjacent = adjacent;
             });
         });
+    };
+    MinesweeperGrid.prototype.inRange = function (grid, x, y) {
+        return (y in grid) && (x in grid[y]);
     };
     MinesweeperGrid.prototype.revealMines = function () {
         var _this = this;
@@ -151,8 +189,8 @@ var MinesweeperGrid = (function () {
                 cell.isRevealed(true);
             }
         });
+        this.wonGame = won;
         this.isGameOver(true);
-        this.wonGame(won);
     };
     MinesweeperGrid.prototype.useFlag = function () {
         this.usedFlags(this.usedFlags() + 1);
@@ -165,10 +203,31 @@ var MinesweeperGrid = (function () {
         var _a = this.difficulty, width = _a.width, height = _a.height, mines = _a.mines;
         var numNonMines = (width * height) - mines;
         if (this.totalRevealed === numNonMines) {
+            this.wonGame = true;
             this.isGameOver(true);
-            this.wonGame(true);
-            alert('Congratulations!');
         }
+    };
+    MinesweeperGrid.prototype.revealAdjacentCells = function (current, done) {
+        var _this = this;
+        if (done === void 0) { done = []; }
+        done.push(current);
+        var grid = this.cellRows();
+        MinesweeperGrid.offsets.forEach(function (offset) {
+            var nX = current.x + offset.x;
+            var nY = current.y + offset.y;
+            if (_this.inRange(grid, nX, nY)) {
+                var next = grid[nY][nX];
+                if (done.indexOf(next) > -1)
+                    return;
+                if (next.adjacent === 0) {
+                    _this.revealAdjacentCells(next, done);
+                }
+                if (!next.isRevealed()) {
+                    _this.incrementRevealed();
+                }
+                next.isRevealed(true);
+            }
+        });
     };
     MinesweeperGrid.offsets = [
         { x: -1, y: -1 },
@@ -182,5 +241,10 @@ var MinesweeperGrid = (function () {
     ];
     return MinesweeperGrid;
 })();
-var game = new MinesweeperGrid(MinesweeperDifficulties.beginner);
+var game = new MinesweeperGame;
 ko.applyBindings(game);
+game.started.subscribe(function (started) {
+    if (started) {
+        console.log('Started a new game!', 'Difficulty:', game.selectedDifficulty().name);
+    }
+});
