@@ -1,5 +1,5 @@
-# Knockout Minesweeper
+# Minesweeper
 
-Simple minesweeper web app built to learn Knockout.js
+Simple minesweeper web app built to introduce myself to Knockout.js.
 
-**[Check it out here](http://derflatulator.github.io/knockout-minesweeper/)**.
+**[Check it out here](http://derflatulator.github.io/minesweeper/)**.
