@@ -25,14 +25,13 @@ class MinesweeperCell {
         this.isRevealed(true);
         this.parent.incrementRevealed();
         
-        if (this.adjacent > 0) {
+        if (!this.isMine && this.adjacent === 0) {
             // propogate through and auto-reveal recursively. 
+            this.parent.revealAdjacentCells(this);
         }
         
         if (this.isMine) {
             this.parent.revealMines();
-            alert("You lose!");
-            window.location.reload();
         }
     }
     
@@ -48,12 +47,12 @@ class MinesweeperCell {
     }
     
     cellText = ko.pureComputed(() => {        
-        if (this.isRevealed() && this.adjacent > 0)
-            return this.adjacent;
-        
         if (this.isRevealed() && this.isMine)
             return '✺';
 
+        if (this.isRevealed() && this.adjacent > 0)
+            return this.adjacent;
+        
         if (this.isFlagged())
             return '🚩';
                         
@@ -62,7 +61,7 @@ class MinesweeperCell {
     
     cellCss = ko.pureComputed(() => {
         let classes: string[] = [];
-        if (this.adjacent > 0)
+        if (!this.isMine && this.adjacent > 0)
             classes.push(`cell-adjacent-${this.adjacent}`);       
         if (this.isFlagged())
             classes.push`flagged`;
@@ -76,28 +75,68 @@ class MinesweeperCell {
 }
 
 interface MinesweeperDifficulty {
+    name: string;
     width: number;
     height: number;
     mines: number;
 }
 
-const MinesweeperDifficulties = {    
-    beginner: {
-        width: 8,
-        height: 8,
-        mines: 10
-    },
-    intermediate: {
-        width: 16,
-        height: 16,
-        mines: 40
-    },    
-    expert: {
-        width: 30,
-        height: 16,
-        mines: 99
+class MinesweeperGame {
+    difficulties: KnockoutObservableArray<MinesweeperDifficulty>;
+    started: KnockoutObservable<boolean>;
+    selectedDifficulty: KnockoutObservable<MinesweeperDifficulty>;
+    grid: KnockoutObservable<MinesweeperGrid>;
+    
+    constructor() {
+        this.difficulties = ko.observableArray([    
+            {
+                name: 'Beginner',
+                width: 8,
+                height: 8,
+                mines: 10
+            },
+            {
+                name: 'Intermediate',
+                width: 16,
+                height: 16,
+                mines: 40
+            },    
+            {
+                name: 'Expert',
+                width: 30,
+                height: 16,
+                mines: 99
+            }
+        ]);
+        
+        this.started = ko.observable(false);
+        this.selectedDifficulty = ko.observable(null);
+        this.grid = ko.observable(null);
+    }    
+    
+    start() {         
+        if (!this.selectedDifficulty()) return;
+               
+        this.started(true);
+        this.grid(new MinesweeperGrid(this.selectedDifficulty()));
+        this.grid().isGameOver.subscribe(gameOver => {
+            if (gameOver) this.gameOver(this.grid().wonGame);
+        });
     }
-};
+    
+    gameOver(won: boolean) {
+        const res = won ? 'Congratulations!\n' : 'Game over!\n';
+        const again = confirm(res + 'Would you like to play again?');
+        if (again) {
+            this.reset();
+        }
+    }
+    
+    reset() {
+        this.grid(null);
+        this.started(false);
+    }
+} 
 
 function computed(target: () => any) {
     return ko.computed(target);
@@ -120,13 +159,13 @@ class MinesweeperGrid {
     
     cells: KnockoutObservableArray<MinesweeperCell>;
     isGameOver: KnockoutObservable<boolean>;
-    wonGame: KnockoutObservable<boolean>;
     usedFlags: KnockoutObservable<number>;
+    wonGame: boolean;
     totalRevealed: number;
     
     constructor(public difficulty: MinesweeperDifficulty) {        
         this.isGameOver = ko.observable(false);
-        this.wonGame = ko.observable(false);
+        this.wonGame = false;
         this.usedFlags = ko.observable(0);
         this.totalRevealed = 0;
         this.init();
@@ -141,10 +180,11 @@ class MinesweeperGrid {
     createCells() {
         const { width, height } = this.difficulty;
         this.cells = ko.observableArray(_.flatten(
-            _.range(width).map(x => _.range(height).map(y =>
+            _.range(height).map(y => _.range(width).map(x =>
                 new MinesweeperCell(x, y, this)
             ))
         ));
+        console.log(this.cellRows());
     }
     
     assignMines() {
@@ -154,20 +194,24 @@ class MinesweeperGrid {
     }
     
     computeAdjacencies() {
-        const grid = _.chunk(this.cells(), this.difficulty.width);
-        grid.forEach((row, x) => {
-            row.forEach((cell, y) => {
-                if (cell.isMine) return;
-                
+        const grid = this.cellRows();
+        grid.forEach((row, y) => {
+            row.forEach((cell, x) => {
                 const adjacent = _.sumBy(MinesweeperGrid.offsets, offset => {
-                    if (x + offset.x in grid && y + offset.y in grid[x]) {
-                        return grid[x + offset.x][y + offset.y].isMine ? 1 : 0;
+                    const cX = x + offset.x;
+                    const cY = y + offset.y;
+                    if (this.inRange(grid, cX, cY)) {
+                        return grid[cY][cX].isMine ? 1 : 0;
                     }
                     return 0;
                 });
                 cell.adjacent = adjacent;
             })
         })
+    }
+    
+    inRange(grid: MinesweeperCell[][], x: number, y: number) {
+        return (y in grid) && (x in grid[y]);
     }
     
     revealMines() {
@@ -183,8 +227,8 @@ class MinesweeperGrid {
                 cell.isRevealed(true);                
             }
         });
+        this.wonGame = won;
         this.isGameOver(true);
-        this.wonGame(won);
     }
     
     useFlag() {
@@ -200,16 +244,36 @@ class MinesweeperGrid {
         const { width, height, mines } = this.difficulty;
         const numNonMines = (width * height) - mines;
         if (this.totalRevealed === numNonMines) {
+            this.wonGame = true;
             this.isGameOver(true);
-            this.wonGame(true);
-            
-            alert('Congratulations!');
         }
+    }
+    
+    revealAdjacentCells(current: MinesweeperCell, done: MinesweeperCell[] = []) {
+        done.push(current);
+        const grid = this.cellRows();
+        MinesweeperGrid.offsets.forEach(offset => {
+            const nX = current.x + offset.x;
+            const nY = current.y + offset.y;
+            if (this.inRange(grid, nX, nY)) {
+                let next = grid[nY][nX];
+                if (done.indexOf(next) > -1) 
+                    return;
+                
+                if (next.adjacent === 0) {      
+                    this.revealAdjacentCells(next, done);
+                }
+                if (!next.isRevealed()) {
+                    this.incrementRevealed();        
+                }
+                next.isRevealed(true);  
+            }
+        })
     }
 
     gameState = ko.pureComputed(() => {
         if (this.isGameOver()) {
-            if (this.wonGame()) return '😎';
+            if (this.wonGame) return '😎';
             else return '☹';
         }    
         return '☺';
@@ -224,5 +288,10 @@ class MinesweeperGrid {
     })
 }
 
-let game = new MinesweeperGrid(MinesweeperDifficulties.beginner);
+const game = new MinesweeperGame;
 ko.applyBindings(game);
+game.started.subscribe(started => {
+    if (started) {
+        console.log('Started a new game!', 'Difficulty:', game.selectedDifficulty().name);
+    }
+})
