@@ -63,7 +63,7 @@ class MinesweeperCell {
         }        
         
         if ('vibrate' in navigator) {
-            navigator.vibrate(this.isFlagged() ? [100, 100] : [200]);
+            navigator.vibrate(this.isFlagged() ? [100, 100, 100] : [200]);
         }
         
         this.isFlagged(!this.isFlagged());        
@@ -102,9 +102,9 @@ class MinesweeperCell {
 
 interface MinesweeperDifficulty {
     name: string;
-    width: number;
-    height: number;
-    mines: number;
+    width: KnockoutObservable<number>;
+    height: KnockoutObservable<number>;
+    mines: KnockoutObservable<number>;
 }
 
 class MinesweeperGame {
@@ -118,22 +118,28 @@ class MinesweeperGame {
         this.difficulties = ko.observableArray([    
             {
                 name: 'Beginner',
-                width: 8,
-                height: 8,
-                mines: 10
+                width: ko.observable(8),
+                height: ko.observable(8),
+                mines: ko.observable(10)
             },
             {
                 name: 'Intermediate',
-                width: 16,
-                height: 16,
-                mines: 40
+                width: ko.observable(16),
+                height: ko.observable(16),
+                mines: ko.observable(40)
             },    
             {
                 name: 'Expert',
-                width: 30,
-                height: 16,
-                mines: 99
-            }
+                width: ko.observable(30),
+                height: ko.observable(16),
+                mines: ko.observable(99)
+            },
+            {
+                name: 'Custom',
+                width: ko.observable(20),
+                height: ko.observable(20),
+                mines: ko.observable(50)
+            }               
         ]);
         
         this.started = ko.observable(false);
@@ -144,6 +150,23 @@ class MinesweeperGame {
     start() {         
         if (!this.selectedDifficulty()) return;
                
+        const { width, height, mines } = this.selectedDifficulty();
+
+        if (width() < 5 || height() < 5) {
+            alert('Playing space is too small. Must be at least 5x5');
+            return;
+        }
+
+        if ((width() * height()) <= mines()) {
+            alert('Too many mines!');
+            return;
+        }               
+        
+        if (mines() < 1) {
+            alert('Need at least one mine!');
+            return;
+        }               
+                       
         this.started(true);
         this.grid(new MinesweeperGrid(this.selectedDifficulty()));
         this.grid().isGameOver.subscribe(gameOver => {
@@ -203,11 +226,12 @@ class MinesweeperGrid {
         this.usedFlags = ko.observable(0);
         this.mouseDown = ko.observable(false);
         this.totalRevealed = 0;
-        this.createCells();
         this.initialized = false;
         this.touchScreen = 'ontouchstart' in window;
         this.timer = 0;
         this.secondsPlayed = ko.observable(0);
+
+        this.createCells();
         // this.init(); // do this after first reveal
     }
 
@@ -221,7 +245,7 @@ class MinesweeperGrid {
     createCells() {
         const { width, height } = this.difficulty;
         this.cells = ko.observableArray(_.flatten(
-            _.range(height).map(y => _.range(width).map(x =>
+            _.range(height()).map(y => _.range(width()).map(x =>
                 new MinesweeperCell(x, y, this)
             ))
         ));
@@ -230,7 +254,7 @@ class MinesweeperGrid {
     assignMines() {
         const { mines } = this.difficulty;
         const cells = this.cells().filter(cell => !cell.isRevealed());
-        const mineCells = _.sampleSize(cells, mines);
+        const mineCells = _.sampleSize(cells, mines());
         mineCells.forEach(cell => cell.isMine = true);
     }
     
@@ -288,7 +312,7 @@ class MinesweeperGrid {
     incrementRevealed() {
         this.totalRevealed++;
         const { width, height, mines } = this.difficulty;
-        const numNonMines = (width * height) - mines;
+        const numNonMines = (width() * height()) - mines();
         if (this.totalRevealed === numNonMines) {
             this.autoFlag();
             this.gameOver(true);
@@ -345,11 +369,11 @@ class MinesweeperGrid {
     });
     
     cellRows = ko.pureComputed(() => {
-        return _.chunk(this.cells(), this.difficulty.width);
+        return _.chunk(this.cells(), this.difficulty.width());
     });
     
     flagsRemaining = ko.pureComputed(() => {
-        return this.difficulty.mines - this.usedFlags();
+        return this.difficulty.mines() - this.usedFlags();
     });
     
     timeString = ko.pureComputed(() => {

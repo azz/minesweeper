@@ -144,7 +144,9 @@
             .status-worried {
                 background-position: 0 -240px;
             }
-
+            .opt-row {
+                margin-top: 10px;
+            }
         </style>
         
         <script src="node_modules/knockout/build/output/knockout-latest.debug.js"></script>
@@ -157,11 +159,22 @@
         <section>
             <h1>Minesweeper</h1>
             <!-- ko ifnot: started -->
-            <h4 style="display: inline">Difficulty:</h4>
-            <select id=difficulty data-bind="options: difficulties,
-                                             optionsText: 'name',
-                                             value: selectedDifficulty"></select>
-            <button id=start data-bind="click: start">Start</button>
+                <h3>Select Difficulty</h3>
+                <select id=difficulty data-bind="options: difficulties,
+                                                optionsText: function(item){ return item.name + ' (' + item.width() + 'x' + item.height() + ')'; },
+                                                value: selectedDifficulty"></select>
+                <!-- ko if: selectedDifficulty().name === 'Custom' -->
+                    <!-- ko with: selectedDifficulty -->
+                        <h3>Options</h3>                    
+                        <div class="opt-row">Width: <input data-bind="textInput: width" type="number" size="3" max="100" min="5" /></div>
+                        <div class="opt-row">Height: <input data-bind="textInput: height" type="number" size="3" max="100" min="5" /></div>
+                        <div class="opt-row"># Mines: <input data-bind="textInput: mines" type="number" size="3" max="100" min="1" /></div>
+                        <br />
+                    <!-- /ko -->
+                <!-- /ko -->
+
+                <button id=start data-bind="click: start">Start</button>                
+            
             <!-- /ko -->
             <!-- ko if: started -->
                 <!-- ko with: grid -->
