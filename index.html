@@ -43,7 +43,7 @@
             body {
                 background: lightgrey;
                 font-family: monospace;  /* Arial, Helvetica, sans-serif;*/               
-                font-size: 1.2em;
+                font-size: 1.15em;
             }
             button, select, select option, option {                 
                 font-family: monospace;  /* Arial, Helvetica, sans-serif;*/               
@@ -211,8 +211,7 @@
                            data-bind="css: gameState,
                                       click: $parent.reset"></i>
                     </header>
-                    Flags left: <span data-bind="text: flagsRemaining"></span> | 
-                    Mines: <span data-bind="text: difficulty.mines"></span> | 
+                    Flags: <span data-bind="text: difficulty.mines() - flagsRemaining()"></span>/<span data-bind="text: difficulty.mines"></span> | 
                     Time: <span data-bind="text: timeString()"></span> <br/>
                     <main data-bind="foreach: cellRows">
                     <div class="cell-row" data-bind="foreach: $data">
