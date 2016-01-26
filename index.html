@@ -168,7 +168,8 @@
                                       click: $parent.reset"></i>
                     </header>
                     Flags left: <span data-bind="text: flagsRemaining"></span> | 
-                    Mines: <span data-bind="text: difficulty.mines"></span> <br/>
+                    Mines: <span data-bind="text: difficulty.mines"></span> | 
+                    Time: <span data-bind="text: timeString()"></span> <br/>
                     <main data-bind="foreach: cellRows">
                     <div class="cell-row" data-bind="foreach: $data">
                         <div href="#" class="cell" 
