@@ -22,7 +22,7 @@
         <link rel="icon" href="img/mine.ico" type="image/x-icon" />
 
         <style type="text/css">
-            section {
+            section, h1 {
                 /*max-width: 1200px;*/
                 margin: 0 auto;
                 text-align: center;
@@ -156,8 +156,10 @@
     <body>
         <a href="https://github.com/derflatulator/minesweeper"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/8b6b8ccc6da3aa5722903da7b58eb5ab1081adee/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"></a>
         
-        <section>
-            <h1>Minesweeper</h1>
+        <h1>Minesweeper</h1>
+        <section id="main" data-bind="template: { name: 'main-templ', data: $data }"><br />Loading...</section>
+            
+        <script type="text/html" id="main-templ">    
             <!-- ko ifnot: started -->
                 <h3>Select Difficulty</h3>
                 <select id=difficulty data-bind="options: difficulties,
@@ -166,9 +168,9 @@
                 <!-- ko if: selectedDifficulty().name === 'Custom' -->
                     <!-- ko with: selectedDifficulty -->
                         <h3>Options</h3>                    
-                        <div class="opt-row">Width: <input data-bind="textInput: width" type="number" size="3" max="100" min="5" /></div>
-                        <div class="opt-row">Height: <input data-bind="textInput: height" type="number" size="3" max="100" min="5" /></div>
-                        <div class="opt-row"># Mines: <input data-bind="textInput: mines" type="number" size="3" max="100" min="1" /></div>
+                        <div class="opt-row">Width: <input data-bind="textInput: width" type="number" size="3" max="45" min="5" /></div>
+                        <div class="opt-row">Height: <input data-bind="textInput: height" type="number" size="3" max="45" min="5" /></div>
+                        <div class="opt-row"># Mines: <input data-bind="textInput: mines" type="number" size="3" max="2024" min="1" /></div>
                         <br />
                     <!-- /ko -->
                 <!-- /ko -->
@@ -201,21 +203,21 @@
                         <h4>How to play:</h4>
                         <ul>
                             <!-- ko if: touchScreen -->
-                            <li>Tap to sweep.</li>
-                            <li>Long-press to add or remove a flag.</li>                        
-                            <li>Tap the face to reset.</li>
-                            <li><a href="#" data-bind="click: $parent.hardReset">Tap here to change difficulty.</a></li>
+                                <li>Tap to sweep.</li>
+                                <li>Long-press to add or remove a flag.</li>                        
+                                <li>Tap the face to reset.</li>
+                                <li><a href="#" data-bind="click: $parent.hardReset">Tap here to change difficulty.</a></li>
                             <!-- /ko -->
                             <!-- ko ifnot: touchScreen -->
-                            <li>Left click to sweep.</li>
-                            <li>Right click to add or remove a flag.</li>                        
-                            <li>Click the face to reset.</li>
-                            <li>Click <a href="#" data-bind="click: $parent.hardReset">here</a> to change difficulty.</li>
+                                <li>Left click to sweep.</li>
+                                <li>Right click to add or remove a flag.</li>                        
+                                <li>Click the face to reset.</li>
+                                <li>Click <a href="#" data-bind="click: $parent.hardReset">here</a> to change difficulty.</li>
                             <!-- /ko -->
                         </ul>
                     </footer>
                 <!-- /ko -->
             <!-- /ko -->
-        </section>        
+        </script>        
     </body>
 </html>
