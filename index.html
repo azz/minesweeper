@@ -43,7 +43,7 @@
             body {
                 background: lightgrey;
                 font-family: monospace;  /* Arial, Helvetica, sans-serif;*/               
-                font-size: 1.2em;
+                font-size: 1.15em;
             }
             button, select, select option, option {                 
                 font-family: monospace;  /* Arial, Helvetica, sans-serif;*/               
@@ -196,9 +196,10 @@
                         <div class="opt-row">(Total cells: <span data-bind="text: +width() * +height()"></span>)</div>
                         <div class="opt-row">Number of Mines: <input data-bind="textInput: mines" type="number" size="3" max="2024" min="2" /></div>
                         <div class="opt-row">(Mine percentage: <span data-bind="text: (100 * mines() / (+width() * +height())).toFixed(1)"></span>%)</div>
-                        <br />
                     <!-- /ko -->
                 <!-- /ko -->
+                <br />
+                <br />
 
                 <button id=start data-bind="click: start" class="start-btn">Start Game</button>                
             
@@ -210,8 +211,7 @@
                            data-bind="css: gameState,
                                       click: $parent.reset"></i>
                     </header>
-                    Flags left: <span data-bind="text: flagsRemaining"></span> | 
-                    Mines: <span data-bind="text: difficulty.mines"></span> | 
+                    Flags: <span data-bind="text: difficulty.mines() - flagsRemaining()"></span>/<span data-bind="text: difficulty.mines"></span> | 
                     Time: <span data-bind="text: timeString()"></span> <br/>
                     <main data-bind="foreach: cellRows">
                     <div class="cell-row" data-bind="foreach: $data">
