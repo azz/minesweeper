@@ -152,6 +152,8 @@ class MinesweeperGame {
                
         const { width, height, mines } = this.selectedDifficulty();
 
+        this.ensureNumber(width, height, mines);
+
         if (width() < 5 || height() < 5) {
             alert('Playing space is too small. Must be at least 5x5.');
             return;
@@ -177,6 +179,16 @@ class MinesweeperGame {
         this.grid().isGameOver.subscribe(gameOver => {
             if (gameOver) this.gameOver(this.grid().wonGame);
         });
+    }
+    
+    // ensures that an obserable holds a numerical value (not a string from user input)
+    ensureNumber(...observables: KnockoutObservable<string|number>[]) {
+        observables.forEach(observable => {
+            let value = observable();
+            if (typeof value !== 'number') {
+                observable(Number(value));
+            }
+        })
     }
     
     gameOver(won: boolean) {
