@@ -158,6 +158,19 @@ var MinesweeperGrid = (function () {
         this.flagsRemaining = ko.pureComputed(function () {
             return _this.difficulty.mines - _this.usedFlags();
         });
+        this.timeString = ko.pureComputed(function () {
+            var seconds = _this.secondsPlayed();
+            var minutes = Math.floor(seconds / 60);
+            if (minutes)
+                seconds %= 60;
+            var str = ((seconds < 10) ? "0" + seconds : String(seconds)) + "s";
+            if (minutes)
+                str = ((minutes < 10) ? "0" + minutes : String(minutes)) + "m " + str;
+            return str;
+        });
+        this.tick = function () {
+            _this.secondsPlayed(_this.secondsPlayed() + 1);
+        };
         this.isGameOver = ko.observable(false);
         this.wonGame = false;
         this.usedFlags = ko.observable(0);
@@ -166,12 +179,15 @@ var MinesweeperGrid = (function () {
         this.createCells();
         this.initialized = false;
         this.touchScreen = 'ontouchstart' in window;
+        this.timer = 0;
+        this.secondsPlayed = ko.observable(0);
         // this.init(); // do this after first reveal
     }
     MinesweeperGrid.prototype.init = function () {
         this.assignMines();
         this.computeAdjacencies();
         this.initialized = true;
+        this.timer = setInterval(this.tick, 1000);
     };
     MinesweeperGrid.prototype.createCells = function () {
         var _this = this;
@@ -215,8 +231,7 @@ var MinesweeperGrid = (function () {
                 cell.isRevealed(true);
             }
         });
-        this.wonGame = false;
-        this.isGameOver(true);
+        this.gameOver(false);
     };
     MinesweeperGrid.prototype.useFlag = function () {
         this.usedFlags(this.usedFlags() + 1);
@@ -241,11 +256,16 @@ var MinesweeperGrid = (function () {
         var numNonMines = (width * height) - mines;
         if (this.totalRevealed === numNonMines) {
             this.autoFlag();
-            this.wonGame = true;
-            this.isGameOver(true);
+            this.gameOver(true);
         }
         if (!this.initialized)
             this.init();
+    };
+    MinesweeperGrid.prototype.gameOver = function (won) {
+        this.wonGame = won;
+        this.isGameOver(true);
+        clearInterval(this.timer);
+        this.timer = 0;
     };
     MinesweeperGrid.prototype.revealAdjacentCells = function (current, done) {
         var _this = this;
