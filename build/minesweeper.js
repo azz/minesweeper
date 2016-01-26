@@ -127,6 +127,7 @@ var MinesweeperGame = (function () {
         if (!this.selectedDifficulty())
             return;
         var _a = this.selectedDifficulty(), width = _a.width, height = _a.height, mines = _a.mines;
+        this.ensureNumber(width, height, mines);
         if (width() < 5 || height() < 5) {
             alert('Playing space is too small. Must be at least 5x5.');
             return;
@@ -148,6 +149,19 @@ var MinesweeperGame = (function () {
         this.grid().isGameOver.subscribe(function (gameOver) {
             if (gameOver)
                 _this.gameOver(_this.grid().wonGame);
+        });
+    };
+    // ensures that an obserable holds a numerical value (not a string from user input)
+    MinesweeperGame.prototype.ensureNumber = function () {
+        var observables = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            observables[_i - 0] = arguments[_i];
+        }
+        observables.forEach(function (observable) {
+            var value = observable();
+            if (typeof value !== 'number') {
+                observable(Number(value));
+            }
         });
     };
     MinesweeperGame.prototype.gameOver = function (won) {
