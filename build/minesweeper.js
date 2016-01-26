@@ -74,7 +74,7 @@ var MinesweeperCell = (function () {
             this.parent.useFlag();
         }
         if ('vibrate' in navigator) {
-            navigator.vibrate(this.isFlagged() ? [100, 100] : [200]);
+            navigator.vibrate(this.isFlagged() ? [100, 100, 100] : [200]);
         }
         this.isFlagged(!this.isFlagged());
         return false; // prevent event propogation
@@ -95,21 +95,27 @@ var MinesweeperGame = (function () {
         this.difficulties = ko.observableArray([
             {
                 name: 'Beginner',
-                width: 8,
-                height: 8,
-                mines: 10
+                width: ko.observable(8),
+                height: ko.observable(8),
+                mines: ko.observable(10)
             },
             {
                 name: 'Intermediate',
-                width: 16,
-                height: 16,
-                mines: 40
+                width: ko.observable(16),
+                height: ko.observable(16),
+                mines: ko.observable(40)
             },
             {
                 name: 'Expert',
-                width: 30,
-                height: 16,
-                mines: 99
+                width: ko.observable(30),
+                height: ko.observable(16),
+                mines: ko.observable(99)
+            },
+            {
+                name: 'Custom',
+                width: ko.observable(20),
+                height: ko.observable(20),
+                mines: ko.observable(50)
             }
         ]);
         this.started = ko.observable(false);
@@ -120,6 +126,19 @@ var MinesweeperGame = (function () {
         var _this = this;
         if (!this.selectedDifficulty())
             return;
+        var _a = this.selectedDifficulty(), width = _a.width, height = _a.height, mines = _a.mines;
+        if (width() < 5 || height() < 5) {
+            alert('Playing space is too small. Must be at least 5x5');
+            return;
+        }
+        if ((width() * height()) <= mines()) {
+            alert('Too many mines!');
+            return;
+        }
+        if (mines() < 1) {
+            alert('Need at least one mine!');
+            return;
+        }
         this.started(true);
         this.grid(new MinesweeperGrid(this.selectedDifficulty()));
         this.grid().isGameOver.subscribe(function (gameOver) {
@@ -153,10 +172,10 @@ var MinesweeperGrid = (function () {
                 return 'status-happy';
         });
         this.cellRows = ko.pureComputed(function () {
-            return _.chunk(_this.cells(), _this.difficulty.width);
+            return _.chunk(_this.cells(), _this.difficulty.width());
         });
         this.flagsRemaining = ko.pureComputed(function () {
-            return _this.difficulty.mines - _this.usedFlags();
+            return _this.difficulty.mines() - _this.usedFlags();
         });
         this.timeString = ko.pureComputed(function () {
             var seconds = _this.secondsPlayed();
@@ -176,11 +195,11 @@ var MinesweeperGrid = (function () {
         this.usedFlags = ko.observable(0);
         this.mouseDown = ko.observable(false);
         this.totalRevealed = 0;
-        this.createCells();
         this.initialized = false;
         this.touchScreen = 'ontouchstart' in window;
         this.timer = 0;
         this.secondsPlayed = ko.observable(0);
+        this.createCells();
         // this.init(); // do this after first reveal
     }
     MinesweeperGrid.prototype.init = function () {
@@ -192,14 +211,14 @@ var MinesweeperGrid = (function () {
     MinesweeperGrid.prototype.createCells = function () {
         var _this = this;
         var _a = this.difficulty, width = _a.width, height = _a.height;
-        this.cells = ko.observableArray(_.flatten(_.range(height).map(function (y) { return _.range(width).map(function (x) {
+        this.cells = ko.observableArray(_.flatten(_.range(height()).map(function (y) { return _.range(width()).map(function (x) {
             return new MinesweeperCell(x, y, _this);
         }); })));
     };
     MinesweeperGrid.prototype.assignMines = function () {
         var mines = this.difficulty.mines;
         var cells = this.cells().filter(function (cell) { return !cell.isRevealed(); });
-        var mineCells = _.sampleSize(cells, mines);
+        var mineCells = _.sampleSize(cells, mines());
         mineCells.forEach(function (cell) { return cell.isMine = true; });
     };
     MinesweeperGrid.prototype.computeAdjacencies = function () {
@@ -253,7 +272,7 @@ var MinesweeperGrid = (function () {
     MinesweeperGrid.prototype.incrementRevealed = function () {
         this.totalRevealed++;
         var _a = this.difficulty, width = _a.width, height = _a.height, mines = _a.mines;
-        var numNonMines = (width * height) - mines;
+        var numNonMines = (width() * height()) - mines();
         if (this.totalRevealed === numNonMines) {
             this.autoFlag();
             this.gameOver(true);
