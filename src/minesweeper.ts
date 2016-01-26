@@ -23,19 +23,19 @@ class MinesweeperCell {
         
         this.parent.mouseDown(false);
 
-        this.isRevealed(true);
-        this.parent.incrementRevealed();
-        
-        if (!this.isMine && this.adjacent() === 0) {
-            // propogate through and auto-reveal recursively. 
-            this.parent.revealAdjacentCells(this);
-        }
-        
         if (this.isMine) {
             this.parent.revealMines();
             if ('vibrate' in navigator) {
                 navigator.vibrate(1500);
-            }
+            }            
+        } else {
+            this.isRevealed(true);
+            this.parent.incrementRevealed();
+            
+            if (this.adjacent() === 0) {
+                // propogate through and auto-reveal recursively. 
+                this.parent.revealAdjacentCells(this);
+            }                
         }
     }
     
@@ -47,8 +47,7 @@ class MinesweeperCell {
 
     // when mouse is lifted
     relief() {
-        if (!this.isRevealed())
-            this.parent.mouseDown(false);
+        this.parent.mouseDown(false);
     }
     
     flag() {        
@@ -252,23 +251,15 @@ class MinesweeperGrid {
     }
     
     revealMines() {
-        let won = true;
         this.cells().forEach(cell => {
             if (cell.isMine) {
-                if (cell.isRevealed()) {
-                    won = false;
-                }
                 if (!cell.isRevealed())
                     this.totalRevealed++;
                     
                 cell.isRevealed(true);                
             }
         });
-        this.wonGame = won;
-        if (won) {
-            this.autoFlag();
-        }
-        
+        this.wonGame = false;        
         this.isGameOver(true);
     }
     
@@ -295,6 +286,7 @@ class MinesweeperGrid {
         const { width, height, mines } = this.difficulty;
         const numNonMines = (width * height) - mines;
         if (this.totalRevealed === numNonMines) {
+            this.autoFlag();
             this.wonGame = true;
             this.isGameOver(true);
         }
