@@ -167,8 +167,8 @@ class MinesweeperGame {
             return;
         }               
         
-        if (mines() < 1) {
-            alert('Need at least one mine!');
+        if (mines() < 2) {
+            alert('Need at least two mines!');
             return;
         }               
                        
