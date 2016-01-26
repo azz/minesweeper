@@ -190,6 +190,8 @@ class MinesweeperGrid {
     isGameOver: KnockoutObservable<boolean>;
     usedFlags: KnockoutObservable<number>;
     mouseDown: KnockoutObservable<boolean>;
+    timer: number;
+    secondsPlayed: KnockoutObservable<number>;
     wonGame: boolean;
     totalRevealed: number;
     initialized: boolean;
@@ -204,6 +206,8 @@ class MinesweeperGrid {
         this.createCells();
         this.initialized = false;
         this.touchScreen = 'ontouchstart' in window;
+        this.timer = 0;
+        this.secondsPlayed = ko.observable(0);
         // this.init(); // do this after first reveal
     }
 
@@ -211,6 +215,7 @@ class MinesweeperGrid {
         this.assignMines();
         this.computeAdjacencies();
         this.initialized = true;
+        this.timer = setInterval(this.tick, 1000);
     }
     
     createCells() {
@@ -259,8 +264,7 @@ class MinesweeperGrid {
                 cell.isRevealed(true);                
             }
         });
-        this.wonGame = false;        
-        this.isGameOver(true);
+        this.gameOver(false);
     }
     
     useFlag() {
@@ -287,12 +291,18 @@ class MinesweeperGrid {
         const numNonMines = (width * height) - mines;
         if (this.totalRevealed === numNonMines) {
             this.autoFlag();
-            this.wonGame = true;
-            this.isGameOver(true);
+            this.gameOver(true);
         }
         
         if (!this.initialized)
             this.init();
+    }
+    
+    gameOver(won: boolean) {
+        this.wonGame = won;
+        this.isGameOver(true);        
+        clearInterval(this.timer);
+        this.timer = 0;
     }
     
     revealAdjacentCells(current: MinesweeperCell, done: MinesweeperCell[] = []) {
@@ -340,7 +350,24 @@ class MinesweeperGrid {
     
     flagsRemaining = ko.pureComputed(() => {
         return this.difficulty.mines - this.usedFlags();
-    })
+    });
+    
+    timeString = ko.pureComputed(() => {
+        let seconds = this.secondsPlayed();
+        let minutes = Math.floor(seconds / 60);        
+        
+        if (minutes) seconds %= 60;
+        
+        let str: string = ((seconds < 10) ? "0" + seconds : String(seconds)) + "s";    
+        if (minutes)
+           str = ((minutes < 10) ? "0" + minutes : String(minutes)) + "m " + str;
+
+        return str;    
+    });
+    
+    tick = () => {
+        this.secondsPlayed(this.secondsPlayed() + 1);    
+    };
 }
 
 const game = new MinesweeperGame;
