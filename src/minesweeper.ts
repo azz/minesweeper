@@ -153,22 +153,22 @@ class MinesweeperGame {
         const { width, height, mines } = this.selectedDifficulty();
 
         if (width() < 5 || height() < 5) {
-            alert('Playing space is too small. Must be at least 5x5');
+            alert('Playing space is too small. Must be at least 5x5.');
             return;
         }
         
         if (width() > 45 || height() > 45) {
-            alert('Playing space is too large. May be at most 45x45');
+            alert('Playing space is too large. May be at most 45x45.');
             return;
         }
 
-        if ((width() * height()) <= mines()) {
-            alert('Too many mines!');
+        if ((width() * height()) <= mines() + 1) {
+            alert('Too many mines! Need at least two blank cells.');
             return;
         }               
         
-        if (mines() < 1) {
-            alert('Need at least one mine!');
+        if (mines() < 2) {
+            alert('Need at least two mines!');
             return;
         }               
                        
