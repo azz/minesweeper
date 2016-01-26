@@ -39,16 +39,18 @@ var MinesweeperCell = (function () {
         if (this.parent.isGameOver() || this.isRevealed() || this.isFlagged())
             return;
         this.parent.mouseDown(false);
-        this.isRevealed(true);
-        this.parent.incrementRevealed();
-        if (!this.isMine && this.adjacent() === 0) {
-            // propogate through and auto-reveal recursively. 
-            this.parent.revealAdjacentCells(this);
-        }
         if (this.isMine) {
             this.parent.revealMines();
             if ('vibrate' in navigator) {
                 navigator.vibrate(1500);
+            }
+        }
+        else {
+            this.isRevealed(true);
+            this.parent.incrementRevealed();
+            if (this.adjacent() === 0) {
+                // propogate through and auto-reveal recursively. 
+                this.parent.revealAdjacentCells(this);
             }
         }
     };
@@ -59,8 +61,7 @@ var MinesweeperCell = (function () {
     };
     // when mouse is lifted
     MinesweeperCell.prototype.relief = function () {
-        if (!this.isRevealed())
-            this.parent.mouseDown(false);
+        this.parent.mouseDown(false);
     };
     MinesweeperCell.prototype.flag = function () {
         if (this.parent.isGameOver() || this.isRevealed())
@@ -207,21 +208,14 @@ var MinesweeperGrid = (function () {
     };
     MinesweeperGrid.prototype.revealMines = function () {
         var _this = this;
-        var won = true;
         this.cells().forEach(function (cell) {
             if (cell.isMine) {
-                if (cell.isRevealed()) {
-                    won = false;
-                }
                 if (!cell.isRevealed())
                     _this.totalRevealed++;
                 cell.isRevealed(true);
             }
         });
-        this.wonGame = won;
-        if (won) {
-            this.autoFlag();
-        }
+        this.wonGame = false;
         this.isGameOver(true);
     };
     MinesweeperGrid.prototype.useFlag = function () {
@@ -246,6 +240,7 @@ var MinesweeperGrid = (function () {
         var _a = this.difficulty, width = _a.width, height = _a.height, mines = _a.mines;
         var numNonMines = (width * height) - mines;
         if (this.totalRevealed === numNonMines) {
+            this.autoFlag();
             this.wonGame = true;
             this.isGameOver(true);
         }
