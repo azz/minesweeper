@@ -156,6 +156,11 @@ class MinesweeperGame {
             alert('Playing space is too small. Must be at least 5x5');
             return;
         }
+        
+        if (width() > 45 || height() < 45) {
+            alert('Playing space is too large. May be at most 45x45');
+            return;
+        }
 
         if ((width() * height()) <= mines()) {
             alert('Too many mines!');
