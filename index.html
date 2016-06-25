@@ -190,7 +190,7 @@
         <meta name="msapplication-config" content="/img/browserconfig.xml">
         <meta name="theme-color" content="#ffdd00">
     </head>
-    <body>        
+    <body>
         <h1>Minesweeper</h1>
         <section id="main" data-bind="template: { name: 'main-templ', data: $data }"><br />Loading...</section>
 
@@ -200,8 +200,8 @@
             <a target="_blank" href="https://github.com/derflatulator/minesweeper">View the code on GitHub</a>
             <span class=splitter>|</span>
             Built by <a target="_blank" href="https://twitter.com/derflatulator">Lucas Azzola</a>
-            <span class=splitter>|</span> 
-            Works Offline!
+            <span id=offline><span class=splitter>|</span> 
+            Works Offline!</span>
             <hr />
         </div>
             
@@ -271,6 +271,8 @@
         <script type="text/javascript">
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js', { scope: './' });
+            } else {
+                document.querySelector('#offline').remove();
             }
         </script>
         <script>
