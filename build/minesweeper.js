@@ -303,6 +303,11 @@ var MinesweeperGrid = (function () {
         this.isGameOver(true);
         clearInterval(this.timer);
         this.timer = 0;
+        var state = JSON.stringify({ won: won, seconds: this.secondsPlayed(), difficulty: this.difficulty.name });
+        if (window.ga) {
+            window.ga('send', 'event', 'Game', 'end', state);
+            window.ga('send', 'event', 'Game', won ? 'win' : 'lose', state);
+        }
     };
     MinesweeperGrid.prototype.revealAdjacentCells = function (current, done) {
         var _this = this;
@@ -349,5 +354,8 @@ window.onload = function () {
 game.started.subscribe(function (started) {
     if (started) {
         console.log('Started a new game!', 'Difficulty:', game.selectedDifficulty().name);
+        if (window.ga) {
+            window.ga('send', 'event', 'Game', 'start', 'difficulty=' + game.selectedDifficulty().name);
+        }
     }
 });
