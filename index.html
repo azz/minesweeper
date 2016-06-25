@@ -272,7 +272,8 @@
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js', { scope: './' });
             } else {
-                document.querySelector('#offline').remove();
+                var offline = document.querySelector('#offline');
+                offline.parentNode.removeChild(offline);
             }
         </script>
         <script>
