@@ -29,19 +29,21 @@ var ORIGIN = /https?:\/\/((www|ssl)\.)?google-analytics\.com/;
 function replayQueuedAnalyticsRequests() {
   caches.open(DB_NAME).then(function(cache) {
     cache.keys().then(function (keys) {
-      keys.forEach(function(request, originalTimestamp) {
-        var timeDelta = Date.now() - originalTimestamp;
-        var replayUrl = request.url + '&qt=' + timeDelta;
-        fetch(replayUrl).then(function(response) {
+      keys.forEach(function(request, response) {
+        response.text().then(function (originalTimestamp) {
+          var timeDelta = Date.now() - +originalTimestamp;
+          var replayUrl = request.url + '&qt=' + timeDelta;
+          fetch(replayUrl).then(function(response) {
             if (response.status >= 500) {
                 return Response.error();
             }
             db.delete(url);
-        }).catch(function(error) {
+          }).catch(function(error) {
             if (timeDelta > EXPIRATION_TIME_DELTA) {
                 cache.delete(request);
             }
-        });
+          });
+        })
       });
     });
   });
@@ -49,7 +51,7 @@ function replayQueuedAnalyticsRequests() {
 
 function queueFailedAnalyticsRequest(request) {
   caches.open(DB_NAME).then(function(cache) {
-    cache.put(request, Date.now());
+    cache.put(request, new Response(new Blob([Date.now()])));
   });
 }
 
