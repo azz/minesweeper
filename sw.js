@@ -6,6 +6,8 @@ toolbox.router.default = toolbox.fastest;
 toolbox.precache([
     '/index.html', 
     '/build/minesweeper.js', 
+    '/node_modules/lodash/lodash.js',
+    '/node_modules/knockout/build/output/knockout-latest.js',
     '/img/sprite-small.png',
     '/img/sprite.png',
     
