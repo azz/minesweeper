@@ -155,6 +155,12 @@
                 margin-top: 40px;
                 text-align: center;
             }
+            @media only screen and (max-width: 600px) {
+                .splitter {
+                    display: block;
+                    color: transparent;
+                }
+            }
         </style>
         
         <script src="node_modules/knockout/build/output/knockout-latest.js"></script>
@@ -192,8 +198,11 @@
         <div id="links">
             <hr />
             <a target="_blank" href="https://github.com/derflatulator/minesweeper">View the code on GitHub</a>
-            |
+            <span class=splitter>|</span>
             Built by <a target="_blank" href="https://twitter.com/derflatulator">Lucas Azzola</a>
+            <span class=splitter>|</span> 
+            Works Offline!
+            <hr />
         </div>
             
         <script type="text/html" id="main-templ">    

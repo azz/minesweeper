@@ -1,10 +1,16 @@
 {
+	"manifest_version": 2,
+	"version": "1.0.0",
+	"default_locale": "en",
 	"name": "Minesweeper",
 	"short_name": "Minesweeper",
+	"description": "Minesweeper Progressive Web Application",
 	"background_color": "#d3d3d3",
 	"theme_color": "#ffdd00",
 	"start_url": "/",
 	"display": "fullscreen",
+	"offline_enabled": true,
+	
 	"icons": [
 		{
 			"src": "\/img\/android-chrome-36x36.png",
